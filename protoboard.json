@@ -1,0 +1,16 @@
+{
+  "browserify": {
+    "dist/browserified.js": "./index.js"
+  },
+  "dependencies": {
+    "js": [
+      "allex:app:lib",
+      "allex:templateslite:lib",
+      "allex:htmltemplates:lib",
+      "allex:hammerjs:lib"
+    ]
+  },
+  "additionaltargets": {
+    "css": [["dist", "style.css"]]
+  }
+}

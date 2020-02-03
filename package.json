@@ -1,0 +1,27 @@
+{
+  "name": "social_rwcwebcomponent",
+  "version": "1.0.0",
+  "description": "Allex relation with candidates web component",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/social-webcomponents/rwc.git"
+  },
+  "keywords": [
+    "ecosystem:AllexJS",
+    "relation",
+    "with",
+    "candidates",
+    "web",
+    "component"
+  ],
+  "author": "Luka Petrovic <lukapetrovicsi@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/social-webcomponents/rwc/issues"
+  },
+  "homepage": "https://github.com/social-webcomponents/rwc#readme"
+}
