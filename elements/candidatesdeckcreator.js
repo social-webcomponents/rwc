@@ -1,34 +1,25 @@
 function createCandidatesDeckCreatorElement (lib, applib, templateslib, htmltemplateslib, hammerlib) {
   'use strict';
 
-  var FromDataCreator = applib.getElementType('FromDataCreator'),
-    DataAwareElement = applib.getElementType('DataAwareElement'),
-    o = templateslib.override,
-    m = htmltemplateslib,
-    HammerableMixin = hammerlib.mixins.HammerableMixin;
+  var RWCDeckBase = applib.getElementType('RWCDeckBase');
 
   function CandidatesDeck (id, options) {
     if (!lib.isString(options.acceptEventName)) {
-      throw new Error ('options for '+this.constructor.name+' have to have "acceptEventName" property');
+      throw new Error ('options for '+this.constructor.name+' have to have the "acceptEventName" property');
     }
     if (!lib.isString(options.rejectEventName)) {
-      throw new Error ('options for '+this.constructor.name+' have to have "rejectEventName" property');
+      throw new Error ('options for '+this.constructor.name+' have to have the "rejectEventName" property');
     }
-    FromDataCreator.call(this, id, options);
+    RWCDeckBase.call(this, id, options);
   }
-  lib.inherit(CandidatesDeck, FromDataCreator);
+  lib.inherit(CandidatesDeck, RWCDeckBase);
   CandidatesDeck.prototype.createDescriptorFromArryItem = function (item) {
-    return {
-      type: this.getConfigVal('presentation_type') || 'CandidatePresentationElement',
-      name: 'candidate_'+item.username,
-      options: lib.extend(this.getConfigVal('presentation'), {
-        actual: true,
-        cdnurl: this.getConfigVal('cdnurl'),
-        acceptEventName: this.getConfigVal('acceptEventName'),
-        rejectEventName: this.getConfigVal('rejectEventName')
-      })
-    };
+    var ret = RWCDeckBase.prototype.createDescriptorFromArryItem.call(this, item);
+    ret.options.acceptEventName = this.getConfigVal('acceptEventName');
+    ret.options.rejectEventName = this.getConfigVal('rejectEventName');
+    return ret;
   };
+  CandidatesDeck.prototype.presentationElementType = 'CandidatePresentationElement';
   applib.registerElementType('CandidatesDeck', CandidatesDeck);
 }
 

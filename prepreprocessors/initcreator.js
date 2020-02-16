@@ -28,6 +28,7 @@ function createInitRWCPrePreprocessor (lib, applib) {
     desc.preprocessors.Command.push.apply(desc.preprocessors.Command, [
       'getCandidatesOn',
       'getInitiatorsOn',
+      'getMatchesOn',
       'initiateRelationOn',
       'blockRelationOn',
       'acceptRelationOn',

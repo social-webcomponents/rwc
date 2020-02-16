@@ -11,6 +11,7 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
     WebElement.call(this, id, options);
     this.needCandidates = new lib.HookCollection();
     this.needLikes = new lib.HookCollection();
+    this.needMatches = new lib.HookCollection();
     this.needToInitiate = new lib.HookCollection();
     this.needToBlock = new lib.HookCollection();
     this.needToAccept = new lib.HookCollection();
@@ -18,10 +19,6 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
   }
   lib.inherit(RWCInterfaceElement, WebElement);
   RWCInterfaceElement.prototype.__cleanUp = function(){
-    if (this.needToReject) {
-      this.needToReject.destroy();
-    }
-    this.needToReject = null;
     if (this.needToReject) {
       this.needToReject.destroy();
     }
@@ -38,6 +35,10 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
       this.needToInitiate.destroy();
     }
     this.needToInitiate = null;
+    if (this.needMatches) {
+      this.needMatches.destroy();
+    }
+    this.needMatches = null;
     if (this.needLikes) {
       this.needLikes.destroy();
     }
@@ -53,6 +54,10 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
   };
   RWCInterfaceElement.prototype.set_likes = function(data){
     this.getElement('LikesDeck').set('data', data);
+    return true;
+  };
+  RWCInterfaceElement.prototype.set_matches = function(data){
+    this.getElement('MatchesDeck').set('data', data);
     return true;
   };
   applib.registerElementType('RWCInterface', RWCInterfaceElement);
@@ -101,6 +106,15 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
               needLikes.emitter.fire();
             }
           }
+        },
+        {
+          triggers: '.MatchesDeck:actual',
+          references: '.!needMatches',
+          handler: function(needMatches, actual){
+            if (!!actual){
+              needMatches.emitter.fire();
+            }
+          }
         }
       ]
     });
@@ -110,14 +124,27 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
     return [{
       name: 'CandidatesDeck',
       type: 'CandidatesDeck',
-      options: this.deckWidgetOptions(this.config.widget || {}, 'candidates', 'needToInitiate', 'needToBlock')
+      options: this.deckWidgetOptions(this.config.widget || {}, 'candidates', {
+        acceptEventName: 'needToInitiate', 
+        rejectEventName: 'needToBlock'
+      })
     },{
       name: 'LikesDeck',
       type: 'CandidatesDeck',
-      options: this.deckWidgetOptions(this.config.widget || {}, 'likes', 'needToAccept', 'needToReject')
+      options: this.deckWidgetOptions(this.config.widget || {}, 'likes', {
+        acceptEventName: 'needToAccept', 
+        rejectEventName: 'needToReject'
+      })
+    },{
+      name: 'MatchesDeck',
+      type: 'MatchesDeck',
+      options: this.deckWidgetOptions(this.config.widget || {}, 'matches', {
+        openEventName: 'needToOpen', 
+        dropEventName: 'needToDrop'
+      })
     }];
   };
-  RWCWidgetModifier.prototype.deckWidgetOptions = function(params, configname, acceptEventName, rejectEventName){
+  RWCWidgetModifier.prototype.deckWidgetOptions = function(params, configname, events){
     if (!configname) {
       throw new Error('RWCWidgetModifier.prototype.deckWidgetOptions needs a configname');
     }
@@ -132,10 +159,8 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
         ,'ATTRS', params[configname].div.attrs || ''
         ,'CONTENTS', params[configname].div.text || ''
       ),
-      acceptEventName: acceptEventName,
-      rejectEventName: rejectEventName,
       cdnurl: params.cdnurl
-    }, params[configname])
+    }, events, params[configname])
   };
   RWCWidgetModifier.prototype.DEFAULT_CONFIG = function () {
     return {};

@@ -35,6 +35,12 @@ function createRWCWidgetIntegrator (lib, applib) {
         gif([{}]);
       }
     },{
+      triggers: pp+'.RWCInterface!needMatches',
+      references: '.>getMatchesOn'+rlm,
+      handler: function (gmf) {
+        gmf([{}]);
+      }
+    },{
       triggers: pp+'.RWCInterface!needToInitiate',
       references: '.>initiateRelationOn'+rlm,
       handler: funcWithTargetName
@@ -72,6 +78,18 @@ function createRWCWidgetIntegrator (lib, applib) {
         itf.set('likes', glf.result);
         if (glf.error) {
           itf.set('likes_error', glf.error);
+        }
+      }
+    },{
+      triggers: '.>getMatchesOn'+rlm,
+      references: pp+'.RWCInterface',
+      handler: function (itf, glf) {
+        if (glf.running) {
+          return;
+        }
+        itf.set('matches', glf.result);
+        if (glf.error) {
+          itf.set('matches_error', glf.error);
         }
       }
     })

@@ -47,7 +47,7 @@ function createCandidatePresentationElement (lib, applib, templateslib, htmltemp
     HammerableMixin.prototype.destroy.call(this);
     DataAwareElement.prototype.__cleanUp.call(this);
   };
-  CandidatePresentationElement.prototype.makeCandidatePicture = function (pic) {
+  CandidatePresentationElement.prototype.makeCandidatePicture = function (pic, size, imgcode) {
     var ret;
     if (!lib.isString(pic)) {
       return '';
@@ -59,7 +59,7 @@ function createCandidatePresentationElement (lib, applib, templateslib, htmltemp
     if(ret[ret.length-1]!=='/'){
       ret+='/';
     }
-    return ret+pic;
+    return ret+pic+(size ? '-'+size : '');
   };
   CandidatePresentationElement.prototype.resetHammerPosition = function () {
     if (this.hammerPos) {

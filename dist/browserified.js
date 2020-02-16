@@ -48,7 +48,7 @@ function createCandidatePresentationElement (lib, applib, templateslib, htmltemp
     HammerableMixin.prototype.destroy.call(this);
     DataAwareElement.prototype.__cleanUp.call(this);
   };
-  CandidatePresentationElement.prototype.makeCandidatePicture = function (pic) {
+  CandidatePresentationElement.prototype.makeCandidatePicture = function (pic, size, imgcode) {
     var ret;
     if (!lib.isString(pic)) {
       return '';
@@ -60,7 +60,7 @@ function createCandidatePresentationElement (lib, applib, templateslib, htmltemp
     if(ret[ret.length-1]!=='/'){
       ret+='/';
     }
-    return ret+pic;
+    return ret+pic+(size ? '-'+size : '');
   };
   CandidatePresentationElement.prototype.resetHammerPosition = function () {
     if (this.hammerPos) {
@@ -113,34 +113,25 @@ module.exports = createCandidatePresentationElement;
 function createCandidatesDeckCreatorElement (lib, applib, templateslib, htmltemplateslib, hammerlib) {
   'use strict';
 
-  var FromDataCreator = applib.getElementType('FromDataCreator'),
-    DataAwareElement = applib.getElementType('DataAwareElement'),
-    o = templateslib.override,
-    m = htmltemplateslib,
-    HammerableMixin = hammerlib.mixins.HammerableMixin;
+  var RWCDeckBase = applib.getElementType('RWCDeckBase');
 
   function CandidatesDeck (id, options) {
     if (!lib.isString(options.acceptEventName)) {
-      throw new Error ('options for '+this.constructor.name+' have to have "acceptEventName" property');
+      throw new Error ('options for '+this.constructor.name+' have to have the "acceptEventName" property');
     }
     if (!lib.isString(options.rejectEventName)) {
-      throw new Error ('options for '+this.constructor.name+' have to have "rejectEventName" property');
+      throw new Error ('options for '+this.constructor.name+' have to have the "rejectEventName" property');
     }
-    FromDataCreator.call(this, id, options);
+    RWCDeckBase.call(this, id, options);
   }
-  lib.inherit(CandidatesDeck, FromDataCreator);
+  lib.inherit(CandidatesDeck, RWCDeckBase);
   CandidatesDeck.prototype.createDescriptorFromArryItem = function (item) {
-    return {
-      type: this.getConfigVal('presentation_type') || 'CandidatePresentationElement',
-      name: 'candidate_'+item.username,
-      options: lib.extend(this.getConfigVal('presentation'), {
-        actual: true,
-        cdnurl: this.getConfigVal('cdnurl'),
-        acceptEventName: this.getConfigVal('acceptEventName'),
-        rejectEventName: this.getConfigVal('rejectEventName')
-      })
-    };
+    var ret = RWCDeckBase.prototype.createDescriptorFromArryItem.call(this, item);
+    ret.options.acceptEventName = this.getConfigVal('acceptEventName');
+    ret.options.rejectEventName = this.getConfigVal('rejectEventName');
+    return ret;
   };
+  CandidatesDeck.prototype.presentationElementType = 'CandidatePresentationElement';
   applib.registerElementType('CandidatesDeck', CandidatesDeck);
 }
 
@@ -151,12 +142,138 @@ function createElements (lib, applib, templateslib, htmltemplateslib, hammerlib)
   'use strict';
 
   require('./candidatepresentationcreator')(lib, applib, templateslib, htmltemplateslib, hammerlib);
+  require('./matchpresentationcreator')(lib, applib, templateslib, htmltemplateslib, hammerlib);
+  require('./rwcdeckbasecreator')(lib, applib, templateslib, htmltemplateslib, hammerlib);
   require('./candidatesdeckcreator')(lib, applib, templateslib, htmltemplateslib, hammerlib);
+  require('./matchesdeckcreator')(lib, applib, templateslib, htmltemplateslib, hammerlib);
 }
 
 module.exports = createElements;
 
-},{"./candidatepresentationcreator":1,"./candidatesdeckcreator":2}],4:[function(require,module,exports){
+},{"./candidatepresentationcreator":1,"./candidatesdeckcreator":2,"./matchesdeckcreator":4,"./matchpresentationcreator":5,"./rwcdeckbasecreator":6}],4:[function(require,module,exports){
+function createMatchesDeckCreatorElement (lib, applib, templateslib, htmltemplateslib, hammerlib) {
+  'use strict';
+
+  var RWCDeckBase = applib.getElementType('RWCDeckBase');
+
+  function MatchesDeck (id, options) {
+    if (!lib.isString(options.openEventName)) {
+      throw new Error ('options for '+this.constructor.name+' have to have the "openEventName" property');
+    }
+    if (!lib.isString(options.dropEventName)) {
+      throw new Error ('options for '+this.constructor.name+' have to have the "dropEventName" property');
+    }
+    RWCDeckBase.call(this, id, options);
+  }
+  lib.inherit(MatchesDeck, RWCDeckBase);
+  MatchesDeck.prototype.createDescriptorFromArryItem = function (item) {
+    var ret = RWCDeckBase.prototype.createDescriptorFromArryItem.call(this, item);
+    ret.options.openEventName = this.getConfigVal('openEventName');
+    ret.options.dropEventName = this.getConfigVal('dropEventName');
+    return ret;
+  };
+  MatchesDeck.prototype.presentationElementType = 'MatchPresentationElement';
+  applib.registerElementType('MatchesDeck', MatchesDeck);
+}
+
+module.exports = createMatchesDeckCreatorElement;
+
+},{}],5:[function(require,module,exports){
+function createMatchPresentationElement (lib, applib, templateslib, htmltemplateslib, hammerlib) {
+  'use strict';
+
+  var FromDataCreator = applib.getElementType('FromDataCreator'),
+    DataAwareElement = applib.getElementType('DataAwareElement'),
+    o = templateslib.override,
+    m = htmltemplateslib;
+
+
+  function createDataMarkup (options){
+    return o(m.div,
+      'CLASS', 'match-container',
+      'CONTENTS', [
+        o(m.div,
+          'CLASS', 'match',
+          'CONTENTS', [
+            o(m.span,
+              'CONTENTS', '{{item.nick || item.username}}'
+            ),
+            o(m.div,
+              'CLASS', 'deck-profile-image',
+              'CONTENTS', '<img src="{{this.makeMatchPicture(item.picture)}}" />'
+            )
+          ]
+        )
+      ]
+    );
+  }
+
+
+  function MatchPresentationElement (id, options) {
+    console.log('new MatchPresentationElement', options);
+    if (!lib.isString(options.openEventName)) {
+      throw new Error ('options for '+this.constructor.name+' have to have "openEventName" property');
+    }
+    if (!lib.isString(options.dropEventName)) {
+      throw new Error ('options for '+this.constructor.name+' have to have "dropEventName" property');
+    }
+    options.data_markup = options.data_markup || createDataMarkup(options.data_markup_options);
+    DataAwareElement.call(this, id, options);
+  }
+  lib.inherit(MatchPresentationElement, DataAwareElement);
+  MatchPresentationElement.prototype.__cleanUp = function () {
+    DataAwareElement.prototype.__cleanUp.call(this);
+  };
+  MatchPresentationElement.prototype.makeMatchPicture = function (pic, size, imgcode) {
+    var ret;
+    if (!lib.isString(pic)) {
+      return '';
+    }
+    ret = this.getConfigVal('cdnurl');
+    if (!lib.isString(ret)) {
+      return '';
+    }
+    if(ret[ret.length-1]!=='/'){
+      ret+='/';
+    }
+    return ret+pic+(size ? '-'+size : '');
+  };
+
+  applib.registerElementType('MatchPresentationElement', MatchPresentationElement);
+
+}
+module.exports = createMatchPresentationElement;
+
+},{}],6:[function(require,module,exports){
+function createRWCDeckBaseCreatorElement (lib, applib, templateslib, htmltemplateslib, hammerlib) {
+  'use strict';
+
+  var FromDataCreator = applib.getElementType('FromDataCreator'),
+    DataAwareElement = applib.getElementType('DataAwareElement'),
+    o = templateslib.override,
+    m = htmltemplateslib,
+    HammerableMixin = hammerlib.mixins.HammerableMixin;
+
+  function RWCDeckBase (id, options) {
+    FromDataCreator.call(this, id, options);
+  }
+  lib.inherit(RWCDeckBase, FromDataCreator);
+  RWCDeckBase.prototype.createDescriptorFromArryItem = function (item) {
+    return {
+      type: this.getConfigVal('presentation_type') || this.presentationElementType,
+      name: (this.getConfigVal('presentation_name_prefix')||'')+'candidate_'+item.username,
+      options: lib.extend({}, this.getConfigVal('presentation'), {
+        actual: true,
+        cdnurl: this.getConfigVal('cdnurl')
+      })
+    };
+  };
+  applib.registerElementType('RWCDeckBase', RWCDeckBase);
+}
+
+module.exports = createRWCDeckBaseCreatorElement;
+
+},{}],7:[function(require,module,exports){
 (function createRWCWebComponent (execlib) {
 
   var lib = execlib.lib,
@@ -174,7 +291,7 @@ module.exports = createElements;
 
 })(ALLEX);
 
-},{"./elements":3,"./modifiers":5,"./prepreprocessors":8}],5:[function(require,module,exports){
+},{"./elements":3,"./modifiers":8,"./prepreprocessors":11}],8:[function(require,module,exports){
 function createModifiers (lib, applib, templateslib, htmltemplateslib) {
   'use strict';
 
@@ -184,7 +301,7 @@ function createModifiers (lib, applib, templateslib, htmltemplateslib) {
 
 module.exports = createModifiers;
 
-},{"./rwcwidgetcreator":6,"./rwcwidgetintegrator":7}],6:[function(require,module,exports){
+},{"./rwcwidgetcreator":9,"./rwcwidgetintegrator":10}],9:[function(require,module,exports){
 function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
   'use strict';
 
@@ -198,6 +315,7 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
     WebElement.call(this, id, options);
     this.needCandidates = new lib.HookCollection();
     this.needLikes = new lib.HookCollection();
+    this.needMatches = new lib.HookCollection();
     this.needToInitiate = new lib.HookCollection();
     this.needToBlock = new lib.HookCollection();
     this.needToAccept = new lib.HookCollection();
@@ -205,10 +323,6 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
   }
   lib.inherit(RWCInterfaceElement, WebElement);
   RWCInterfaceElement.prototype.__cleanUp = function(){
-    if (this.needToReject) {
-      this.needToReject.destroy();
-    }
-    this.needToReject = null;
     if (this.needToReject) {
       this.needToReject.destroy();
     }
@@ -225,6 +339,10 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
       this.needToInitiate.destroy();
     }
     this.needToInitiate = null;
+    if (this.needMatches) {
+      this.needMatches.destroy();
+    }
+    this.needMatches = null;
     if (this.needLikes) {
       this.needLikes.destroy();
     }
@@ -240,6 +358,10 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
   };
   RWCInterfaceElement.prototype.set_likes = function(data){
     this.getElement('LikesDeck').set('data', data);
+    return true;
+  };
+  RWCInterfaceElement.prototype.set_matches = function(data){
+    this.getElement('MatchesDeck').set('data', data);
     return true;
   };
   applib.registerElementType('RWCInterface', RWCInterfaceElement);
@@ -288,6 +410,15 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
               needLikes.emitter.fire();
             }
           }
+        },
+        {
+          triggers: '.MatchesDeck:actual',
+          references: '.!needMatches',
+          handler: function(needMatches, actual){
+            if (!!actual){
+              needMatches.emitter.fire();
+            }
+          }
         }
       ]
     });
@@ -297,14 +428,27 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
     return [{
       name: 'CandidatesDeck',
       type: 'CandidatesDeck',
-      options: this.deckWidgetOptions(this.config.widget || {}, 'candidates', 'needToInitiate', 'needToBlock')
+      options: this.deckWidgetOptions(this.config.widget || {}, 'candidates', {
+        acceptEventName: 'needToInitiate', 
+        rejectEventName: 'needToBlock'
+      })
     },{
       name: 'LikesDeck',
       type: 'CandidatesDeck',
-      options: this.deckWidgetOptions(this.config.widget || {}, 'likes', 'needToAccept', 'needToReject')
+      options: this.deckWidgetOptions(this.config.widget || {}, 'likes', {
+        acceptEventName: 'needToAccept', 
+        rejectEventName: 'needToReject'
+      })
+    },{
+      name: 'MatchesDeck',
+      type: 'MatchesDeck',
+      options: this.deckWidgetOptions(this.config.widget || {}, 'matches', {
+        openEventName: 'needToOpen', 
+        dropEventName: 'needToDrop'
+      })
     }];
   };
-  RWCWidgetModifier.prototype.deckWidgetOptions = function(params, configname, acceptEventName, rejectEventName){
+  RWCWidgetModifier.prototype.deckWidgetOptions = function(params, configname, events){
     if (!configname) {
       throw new Error('RWCWidgetModifier.prototype.deckWidgetOptions needs a configname');
     }
@@ -319,10 +463,8 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
         ,'ATTRS', params[configname].div.attrs || ''
         ,'CONTENTS', params[configname].div.text || ''
       ),
-      acceptEventName: acceptEventName,
-      rejectEventName: rejectEventName,
       cdnurl: params.cdnurl
-    }, params[configname])
+    }, events, params[configname])
   };
   RWCWidgetModifier.prototype.DEFAULT_CONFIG = function () {
     return {};
@@ -333,7 +475,7 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
 
 module.exports = createRWCWidget;
 
-},{}],7:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 function funcWithTargetName (func, targetname) {
   func([targetname]);
 }
@@ -369,6 +511,12 @@ function createRWCWidgetIntegrator (lib, applib) {
       references: '.>getInitiatorsOn'+rlm,
       handler: function (gif) {
         gif([{}]);
+      }
+    },{
+      triggers: pp+'.RWCInterface!needMatches',
+      references: '.>getMatchesOn'+rlm,
+      handler: function (gmf) {
+        gmf([{}]);
       }
     },{
       triggers: pp+'.RWCInterface!needToInitiate',
@@ -410,6 +558,18 @@ function createRWCWidgetIntegrator (lib, applib) {
           itf.set('likes_error', glf.error);
         }
       }
+    },{
+      triggers: '.>getMatchesOn'+rlm,
+      references: pp+'.RWCInterface',
+      handler: function (itf, glf) {
+        if (glf.running) {
+          return;
+        }
+        itf.set('matches', glf.result);
+        if (glf.error) {
+          itf.set('matches_error', glf.error);
+        }
+      }
     })
   };
   RWCWidgetIntegratorModifier.prototype.DEFAULT_CONFIG = function () {
@@ -420,7 +580,7 @@ function createRWCWidgetIntegrator (lib, applib) {
 }
 module.exports = createRWCWidgetIntegrator;
 
-},{}],8:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 function createPrePreprocessors (lib, applib) {
   'use strict';
 
@@ -428,7 +588,7 @@ function createPrePreprocessors (lib, applib) {
 }
 module.exports = createPrePreprocessors;
 
-},{"./initcreator":9}],9:[function(require,module,exports){
+},{"./initcreator":12}],12:[function(require,module,exports){
 function createInitRWCPrePreprocessor (lib, applib) {
   'use strict';
 
@@ -459,6 +619,7 @@ function createInitRWCPrePreprocessor (lib, applib) {
     desc.preprocessors.Command.push.apply(desc.preprocessors.Command, [
       'getCandidatesOn',
       'getInitiatorsOn',
+      'getMatchesOn',
       'initiateRelationOn',
       'blockRelationOn',
       'acceptRelationOn',
@@ -476,4 +637,4 @@ function createInitRWCPrePreprocessor (lib, applib) {
 }
 module.exports = createInitRWCPrePreprocessor;
 
-},{}]},{},[4]);
+},{}]},{},[7]);
