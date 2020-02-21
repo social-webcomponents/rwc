@@ -29,7 +29,7 @@ function createMatchPresentationElement (lib, applib, templateslib, htmltemplate
 
 
   function MatchPresentationElement (id, options) {
-    console.log('new MatchPresentationElement', options);
+    console.log('new', this.constructor.name, options);
     if (!lib.isString(options.openEventName)) {
       throw new Error ('options for '+this.constructor.name+' have to have "openEventName" property');
     }

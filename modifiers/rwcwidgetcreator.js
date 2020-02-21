@@ -9,13 +9,13 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
 
   function RWCInterfaceElement(id, options){
     WebElement.call(this, id, options);
-    this.needCandidates = new lib.HookCollection();
-    this.needLikes = new lib.HookCollection();
-    this.needMatches = new lib.HookCollection();
-    this.needToInitiate = new lib.HookCollection();
-    this.needToBlock = new lib.HookCollection();
-    this.needToAccept = new lib.HookCollection();
-    this.needToReject = new lib.HookCollection();
+    this.needCandidates = this.createBufferableHookCollection(); //new lib.HookCollection();
+    this.needLikes = this.createBufferableHookCollection(); //new lib.HookCollection();
+    this.needMatches = this.createBufferableHookCollection(); //new lib.HookCollection();
+    this.needToInitiate = this.createBufferableHookCollection(); //new lib.HookCollection();
+    this.needToBlock = this.createBufferableHookCollection(); //new lib.HookCollection();
+    this.needToAccept = this.createBufferableHookCollection(); //new lib.HookCollection();
+    this.needToReject = this.createBufferableHookCollection(); //new lib.HookCollection();
   }
   lib.inherit(RWCInterfaceElement, WebElement);
   RWCInterfaceElement.prototype.__cleanUp = function(){
@@ -73,17 +73,20 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
   }
   lib.inherit(RWCWidgetModifier, BasicModifier);
   RWCWidgetModifier.prototype.doProcess = function(name, options, links, logic, resources){
+    this.config = this.config || {};
+    this.config.widget = this.config.widget || {};
+    this.config.types = this.config.types || {};
     var widgetname = this.config.widget.name || 'RWCInterface';
 
     options.elements.push({
       name: widgetname,
       type: 'RWCInterface',
-      options: {
+      options: lib.extend({}, {
         actual: true,
         self_selector: '.',
         default_markup: o(m.div),
         elements: this.rwcElements()
-      },
+      }, this.config.widget.container),
       preprocessors: {
       },
       links: [
@@ -137,7 +140,7 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
       })
     },{
       name: 'MatchesDeck',
-      type: 'MatchesDeck',
+      type: this.config.types.matches || 'MatchesDeck',
       options: this.deckWidgetOptions(this.config.widget || {}, 'matches', {
         openEventName: 'needToOpen', 
         dropEventName: 'needToDrop'
@@ -152,7 +155,7 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
     params[configname] = params[configname] || {};
     params[configname].div = params[configname].div || {};
     return lib.extend({
-      actual: true,
+      //actual: true,
       self_selector: '.',
       default_markup: o(m.div
         ,'CLASS', (params[configname].div.class || '')
