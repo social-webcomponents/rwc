@@ -31,7 +31,6 @@ function createCandidatePresentationElement (lib, applib, templateslib, htmltemp
 
 
   function CandidatePresentationElement (id, options) {
-    console.log('new CandidatePresentationElement', options);
     if (!lib.isString(options.acceptEventName)) {
       throw new Error ('options for '+this.constructor.name+' have to have "acceptEventName" property');
     }
@@ -132,6 +131,7 @@ function createCandidatesDeckCreatorElement (lib, applib, templateslib, htmltemp
     return ret;
   };
   CandidatesDeck.prototype.presentationElementType = 'CandidatePresentationElement';
+  CandidatesDeck.prototype.subElementIdPrefix = 'candidate_';
   applib.registerElementType('CandidatesDeck', CandidatesDeck);
 }
 
@@ -173,6 +173,7 @@ function createMatchesDeckCreatorElement (lib, applib, templateslib, htmltemplat
     return ret;
   };
   MatchesDeck.prototype.presentationElementType = 'MatchPresentationElement';
+  MatchesDeck.prototype.subElementIdPrefix = 'match_';
   applib.registerElementType('MatchesDeck', MatchesDeck);
 }
 
@@ -210,7 +211,6 @@ function createMatchPresentationElement (lib, applib, templateslib, htmltemplate
 
 
   function MatchPresentationElement (id, options) {
-    console.log('new', this.constructor.name, options);
     if (!lib.isString(options.openEventName)) {
       throw new Error ('options for '+this.constructor.name+' have to have "openEventName" property');
     }
@@ -223,6 +223,9 @@ function createMatchPresentationElement (lib, applib, templateslib, htmltemplate
   lib.inherit(MatchPresentationElement, DataAwareElement);
   MatchPresentationElement.prototype.__cleanUp = function () {
     DataAwareElement.prototype.__cleanUp.call(this);
+  };
+  MatchPresentationElement.prototype.set_actual = function (act) {
+    return DataAwareElement.prototype.set_actual.call(this, act);
   };
   MatchPresentationElement.prototype.makeMatchPicture = function (pic, size, imgcode) {
     var ret;
@@ -261,7 +264,7 @@ function createRWCDeckBaseCreatorElement (lib, applib, templateslib, htmltemplat
   RWCDeckBase.prototype.createDescriptorFromArryItem = function (item) {
     return {
       type: this.getConfigVal('presentation_type') || this.presentationElementType,
-      name: (this.getConfigVal('presentation_name_prefix')||'')+'candidate_'+item.username,
+      name: (this.getConfigVal('presentation_name_prefix')||'')+this.subElementIdPrefix+item.username,
       options: lib.extend({}, this.getConfigVal('presentation'), {
         actual: true,
         cdnurl: this.getConfigVal('cdnurl')

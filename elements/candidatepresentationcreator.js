@@ -30,7 +30,6 @@ function createCandidatePresentationElement (lib, applib, templateslib, htmltemp
 
 
   function CandidatePresentationElement (id, options) {
-    console.log('new CandidatePresentationElement', options);
     if (!lib.isString(options.acceptEventName)) {
       throw new Error ('options for '+this.constructor.name+' have to have "acceptEventName" property');
     }

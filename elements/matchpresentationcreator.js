@@ -29,7 +29,6 @@ function createMatchPresentationElement (lib, applib, templateslib, htmltemplate
 
 
   function MatchPresentationElement (id, options) {
-    console.log('new', this.constructor.name, options);
     if (!lib.isString(options.openEventName)) {
       throw new Error ('options for '+this.constructor.name+' have to have "openEventName" property');
     }
@@ -42,6 +41,9 @@ function createMatchPresentationElement (lib, applib, templateslib, htmltemplate
   lib.inherit(MatchPresentationElement, DataAwareElement);
   MatchPresentationElement.prototype.__cleanUp = function () {
     DataAwareElement.prototype.__cleanUp.call(this);
+  };
+  MatchPresentationElement.prototype.set_actual = function (act) {
+    return DataAwareElement.prototype.set_actual.call(this, act);
   };
   MatchPresentationElement.prototype.makeMatchPicture = function (pic, size, imgcode) {
     var ret;

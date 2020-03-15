@@ -20,6 +20,7 @@ function createCandidatesDeckCreatorElement (lib, applib, templateslib, htmltemp
     return ret;
   };
   CandidatesDeck.prototype.presentationElementType = 'CandidatePresentationElement';
+  CandidatesDeck.prototype.subElementIdPrefix = 'candidate_';
   applib.registerElementType('CandidatesDeck', CandidatesDeck);
 }
 

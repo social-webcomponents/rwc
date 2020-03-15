@@ -14,7 +14,7 @@ function createRWCDeckBaseCreatorElement (lib, applib, templateslib, htmltemplat
   RWCDeckBase.prototype.createDescriptorFromArryItem = function (item) {
     return {
       type: this.getConfigVal('presentation_type') || this.presentationElementType,
-      name: (this.getConfigVal('presentation_name_prefix')||'')+'candidate_'+item.username,
+      name: (this.getConfigVal('presentation_name_prefix')||'')+this.subElementIdPrefix+item.username,
       options: lib.extend({}, this.getConfigVal('presentation'), {
         actual: true,
         cdnurl: this.getConfigVal('cdnurl')

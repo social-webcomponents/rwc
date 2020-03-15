@@ -20,6 +20,7 @@ function createMatchesDeckCreatorElement (lib, applib, templateslib, htmltemplat
     return ret;
   };
   MatchesDeck.prototype.presentationElementType = 'MatchPresentationElement';
+  MatchesDeck.prototype.subElementIdPrefix = 'match_';
   applib.registerElementType('MatchesDeck', MatchesDeck);
 }
 
