@@ -20,45 +20,46 @@ function createRWCWidgetIntegrator (lib, applib) {
 
   RWCWidgetIntegratorModifier.prototype.doProcess = function(name, options, links, logic, resources){
     var pp = this.config.rwcwidgetparentpath,
+      itfname = this.config.rwcwidgetname || 'RWCInterface',
       rlm = this.config.rwcrealm;
 
     logic.push({
-      triggers: pp+'.RWCInterface!needCandidates',
+      triggers: pp+'.'+itfname+'!needCandidates',
       references: '.>getCandidatesOn'+rlm,
       handler: function (gcf) {
         gcf([{}]);
       }
     },{
-      triggers: pp+'.RWCInterface!needLikes',
+      triggers: pp+'.'+itfname+'!needLikes',
       references: '.>getInitiatorsOn'+rlm,
       handler: function (gif) {
         gif([{}]);
       }
     },{
-      triggers: pp+'.RWCInterface!needMatches',
+      triggers: pp+'.'+itfname+'!needMatches',
       references: '.>getMatchesOn'+rlm,
       handler: function (gmf) {
         gmf([{}]);
       }
     },{
-      triggers: pp+'.RWCInterface!needToInitiate',
+      triggers: pp+'.'+itfname+'!needToInitiate',
       references: '.>initiateRelationOn'+rlm,
       handler: funcWithTargetName
     },{
-      triggers: pp+'.RWCInterface!needToBlock',
+      triggers: pp+'.'+itfname+'!needToBlock',
       references: '.>blockRelationOn'+rlm,
       handler: funcWithTargetName
     },{
-      triggers: pp+'.RWCInterface!needToAccept',
+      triggers: pp+'.'+itfname+'!needToAccept',
       references: '.>acceptRelationOn'+rlm,
       handler: funcWithTargetName
     },{
-      triggers: pp+'.RWCInterface!needToReject',
+      triggers: pp+'.'+itfname+'!needToReject',
       references: '.>rejectRelationOn'+rlm,
       handler: funcWithTargetName
     },{
       triggers: '.>getCandidatesOn'+rlm,
-      references: pp+'.RWCInterface',
+      references: pp+'.'+itfname,
       handler: function (itf, gcf) {
         if (gcf.running) {
           return;
@@ -70,7 +71,7 @@ function createRWCWidgetIntegrator (lib, applib) {
       }
     },{
       triggers: '.>getInitiatorsOn'+rlm,
-      references: pp+'.RWCInterface',
+      references: pp+'.'+itfname,
       handler: function (itf, glf) {
         if (glf.running) {
           return;
@@ -82,7 +83,7 @@ function createRWCWidgetIntegrator (lib, applib) {
       }
     },{
       triggers: '.>getMatchesOn'+rlm,
-      references: pp+'.RWCInterface',
+      references: pp+'.'+itfname,
       handler: function (itf, glf) {
         if (glf.running) {
           return;

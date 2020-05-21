@@ -141,6 +141,7 @@ module.exports = createCandidatesDeckCreatorElement;
 function createElements (lib, applib, templateslib, htmltemplateslib, hammerlib) {
   'use strict';
 
+  require('./interfacecreator')(lib, applib, templateslib, htmltemplateslib);
   require('./candidatepresentationcreator')(lib, applib, templateslib, htmltemplateslib, hammerlib);
   require('./matchpresentationcreator')(lib, applib, templateslib, htmltemplateslib, hammerlib);
   require('./rwcdeckbasecreator')(lib, applib, templateslib, htmltemplateslib, hammerlib);
@@ -150,7 +151,71 @@ function createElements (lib, applib, templateslib, htmltemplateslib, hammerlib)
 
 module.exports = createElements;
 
-},{"./candidatepresentationcreator":1,"./candidatesdeckcreator":2,"./matchesdeckcreator":4,"./matchpresentationcreator":5,"./rwcdeckbasecreator":6}],4:[function(require,module,exports){
+},{"./candidatepresentationcreator":1,"./candidatesdeckcreator":2,"./interfacecreator":4,"./matchesdeckcreator":5,"./matchpresentationcreator":6,"./rwcdeckbasecreator":7}],4:[function(require,module,exports){
+function createRWCInterfaceElement (lib, applib, templateslib, htmltemplateslib) {
+  'use strict';
+
+  var WebElement = applib.getElementType('WebElement');
+
+  function RWCInterfaceElement(id, options){
+    WebElement.call(this, id, options);
+    this.needCandidates = this.createBufferableHookCollection();
+    this.needLikes = this.createBufferableHookCollection();
+    this.needMatches = this.createBufferableHookCollection();
+    this.needToInitiate = this.createBufferableHookCollection();
+    this.needToBlock = this.createBufferableHookCollection();
+    this.needToAccept = this.createBufferableHookCollection();
+    this.needToReject = this.createBufferableHookCollection();
+  }
+  lib.inherit(RWCInterfaceElement, WebElement);
+  RWCInterfaceElement.prototype.__cleanUp = function(){
+    if (this.needToReject) {
+      this.needToReject.destroy();
+    }
+    this.needToReject = null;
+    if (this.needToAccept) {
+      this.needToAccept.destroy();
+    }
+    this.needToAccept = null;
+    if (this.needToBlock) {
+      this.needToBlock.destroy();
+    }
+    this.needToBlock = null;
+    if (this.needToInitiate){
+      this.needToInitiate.destroy();
+    }
+    this.needToInitiate = null;
+    if (this.needMatches) {
+      this.needMatches.destroy();
+    }
+    this.needMatches = null;
+    if (this.needLikes) {
+      this.needLikes.destroy();
+    }
+    this.needLikes = null;
+    if (this.needCandidates){
+      this.needCandidates.destroy();
+    }
+    this.needCandidates = null;
+  };
+  RWCInterfaceElement.prototype.set_candidates = function(data){
+    this.getElement('CandidatesDeck').set('data', data);
+    return true;
+  };
+  RWCInterfaceElement.prototype.set_likes = function(data){
+    this.getElement('LikesDeck').set('data', data);
+    return true;
+  };
+  RWCInterfaceElement.prototype.set_matches = function(data){
+    this.getElement('MatchesDeck').set('data', data);
+    return true;
+  };
+  applib.registerElementType('RWCInterface', RWCInterfaceElement);
+
+}
+module.exports = createRWCInterfaceElement;
+
+},{}],5:[function(require,module,exports){
 function createMatchesDeckCreatorElement (lib, applib, templateslib, htmltemplateslib, hammerlib) {
   'use strict';
 
@@ -179,7 +244,7 @@ function createMatchesDeckCreatorElement (lib, applib, templateslib, htmltemplat
 
 module.exports = createMatchesDeckCreatorElement;
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 function createMatchPresentationElement (lib, applib, templateslib, htmltemplateslib, hammerlib) {
   'use strict';
 
@@ -247,7 +312,7 @@ function createMatchPresentationElement (lib, applib, templateslib, htmltemplate
 }
 module.exports = createMatchPresentationElement;
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 function createRWCDeckBaseCreatorElement (lib, applib, templateslib, htmltemplateslib, hammerlib) {
   'use strict';
 
@@ -276,7 +341,7 @@ function createRWCDeckBaseCreatorElement (lib, applib, templateslib, htmltemplat
 
 module.exports = createRWCDeckBaseCreatorElement;
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 (function createRWCWebComponent (execlib) {
 
   var lib = execlib.lib,
@@ -294,7 +359,7 @@ module.exports = createRWCDeckBaseCreatorElement;
 
 })(ALLEX);
 
-},{"./elements":3,"./modifiers":8,"./prepreprocessors":11}],8:[function(require,module,exports){
+},{"./elements":3,"./modifiers":9,"./prepreprocessors":12}],9:[function(require,module,exports){
 function createModifiers (lib, applib, templateslib, htmltemplateslib) {
   'use strict';
 
@@ -304,70 +369,14 @@ function createModifiers (lib, applib, templateslib, htmltemplateslib) {
 
 module.exports = createModifiers;
 
-},{"./rwcwidgetcreator":9,"./rwcwidgetintegrator":10}],9:[function(require,module,exports){
+},{"./rwcwidgetcreator":10,"./rwcwidgetintegrator":11}],10:[function(require,module,exports){
 function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
   'use strict';
 
   var o = templateslib.override,
     m = htmltemplateslib,
     p = templateslib.process,
-    BasicModifier = applib.BasicModifier,
-    WebElement = applib.getElementType('WebElement');
-
-  function RWCInterfaceElement(id, options){
-    WebElement.call(this, id, options);
-    this.needCandidates = this.createBufferableHookCollection(); //new lib.HookCollection();
-    this.needLikes = this.createBufferableHookCollection(); //new lib.HookCollection();
-    this.needMatches = this.createBufferableHookCollection(); //new lib.HookCollection();
-    this.needToInitiate = this.createBufferableHookCollection(); //new lib.HookCollection();
-    this.needToBlock = this.createBufferableHookCollection(); //new lib.HookCollection();
-    this.needToAccept = this.createBufferableHookCollection(); //new lib.HookCollection();
-    this.needToReject = this.createBufferableHookCollection(); //new lib.HookCollection();
-  }
-  lib.inherit(RWCInterfaceElement, WebElement);
-  RWCInterfaceElement.prototype.__cleanUp = function(){
-    if (this.needToReject) {
-      this.needToReject.destroy();
-    }
-    this.needToReject = null;
-    if (this.needToAccept) {
-      this.needToAccept.destroy();
-    }
-    this.needToAccept = null;
-    if (this.needToBlock) {
-      this.needToBlock.destroy();
-    }
-    this.needToBlock = null;
-    if (this.needToInitiate){
-      this.needToInitiate.destroy();
-    }
-    this.needToInitiate = null;
-    if (this.needMatches) {
-      this.needMatches.destroy();
-    }
-    this.needMatches = null;
-    if (this.needLikes) {
-      this.needLikes.destroy();
-    }
-    this.needLikes = null;
-    if (this.needCandidates){
-      this.needCandidates.destroy();
-    }
-    this.needCandidates = null;
-  };
-  RWCInterfaceElement.prototype.set_candidates = function(data){
-    this.getElement('CandidatesDeck').set('data', data);
-    return true;
-  };
-  RWCInterfaceElement.prototype.set_likes = function(data){
-    this.getElement('LikesDeck').set('data', data);
-    return true;
-  };
-  RWCInterfaceElement.prototype.set_matches = function(data){
-    this.getElement('MatchesDeck').set('data', data);
-    return true;
-  };
-  applib.registerElementType('RWCInterface', RWCInterfaceElement);
+    BasicModifier = applib.BasicModifier;
 
 
 ///////////////
@@ -382,11 +391,12 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
   RWCWidgetModifier.prototype.doProcess = function(name, options, links, logic, resources){
     this.config = this.config || {};
     this.config.widget = this.config.widget || {};
+    this.config.links = this.config.links || {};
     this.config.types = this.config.types || {};
-    var widgetname = this.config.widget.name || 'RWCInterface';
+    var itfname = this.config.widget.name || 'RWCInterface';
 
     options.elements.push({
-      name: widgetname,
+      name: itfname,
       type: 'RWCInterface',
       options: lib.extend({}, {
         actual: true,
@@ -397,7 +407,7 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
       preprocessors: {
       },
       links: [
-      ],
+      ].concat(this.config.links.container || []),
       logic: [
         {
           triggers: '.CandidatesDeck:actual',
@@ -481,7 +491,7 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
 
 module.exports = createRWCWidget;
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 function funcWithTargetName (func, targetname) {
   func([targetname]);
 }
@@ -504,45 +514,46 @@ function createRWCWidgetIntegrator (lib, applib) {
 
   RWCWidgetIntegratorModifier.prototype.doProcess = function(name, options, links, logic, resources){
     var pp = this.config.rwcwidgetparentpath,
+      itfname = this.config.rwcwidgetname || 'RWCInterface',
       rlm = this.config.rwcrealm;
 
     logic.push({
-      triggers: pp+'.RWCInterface!needCandidates',
+      triggers: pp+'.'+itfname+'!needCandidates',
       references: '.>getCandidatesOn'+rlm,
       handler: function (gcf) {
         gcf([{}]);
       }
     },{
-      triggers: pp+'.RWCInterface!needLikes',
+      triggers: pp+'.'+itfname+'!needLikes',
       references: '.>getInitiatorsOn'+rlm,
       handler: function (gif) {
         gif([{}]);
       }
     },{
-      triggers: pp+'.RWCInterface!needMatches',
+      triggers: pp+'.'+itfname+'!needMatches',
       references: '.>getMatchesOn'+rlm,
       handler: function (gmf) {
         gmf([{}]);
       }
     },{
-      triggers: pp+'.RWCInterface!needToInitiate',
+      triggers: pp+'.'+itfname+'!needToInitiate',
       references: '.>initiateRelationOn'+rlm,
       handler: funcWithTargetName
     },{
-      triggers: pp+'.RWCInterface!needToBlock',
+      triggers: pp+'.'+itfname+'!needToBlock',
       references: '.>blockRelationOn'+rlm,
       handler: funcWithTargetName
     },{
-      triggers: pp+'.RWCInterface!needToAccept',
+      triggers: pp+'.'+itfname+'!needToAccept',
       references: '.>acceptRelationOn'+rlm,
       handler: funcWithTargetName
     },{
-      triggers: pp+'.RWCInterface!needToReject',
+      triggers: pp+'.'+itfname+'!needToReject',
       references: '.>rejectRelationOn'+rlm,
       handler: funcWithTargetName
     },{
       triggers: '.>getCandidatesOn'+rlm,
-      references: pp+'.RWCInterface',
+      references: pp+'.'+itfname,
       handler: function (itf, gcf) {
         if (gcf.running) {
           return;
@@ -554,7 +565,7 @@ function createRWCWidgetIntegrator (lib, applib) {
       }
     },{
       triggers: '.>getInitiatorsOn'+rlm,
-      references: pp+'.RWCInterface',
+      references: pp+'.'+itfname,
       handler: function (itf, glf) {
         if (glf.running) {
           return;
@@ -566,7 +577,7 @@ function createRWCWidgetIntegrator (lib, applib) {
       }
     },{
       triggers: '.>getMatchesOn'+rlm,
-      references: pp+'.RWCInterface',
+      references: pp+'.'+itfname,
       handler: function (itf, glf) {
         if (glf.running) {
           return;
@@ -586,7 +597,7 @@ function createRWCWidgetIntegrator (lib, applib) {
 }
 module.exports = createRWCWidgetIntegrator;
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 function createPrePreprocessors (lib, applib) {
   'use strict';
 
@@ -594,7 +605,7 @@ function createPrePreprocessors (lib, applib) {
 }
 module.exports = createPrePreprocessors;
 
-},{"./initcreator":12}],12:[function(require,module,exports){
+},{"./initcreator":13}],13:[function(require,module,exports){
 function createInitRWCPrePreprocessor (lib, applib) {
   'use strict';
 
@@ -643,4 +654,4 @@ function createInitRWCPrePreprocessor (lib, applib) {
 }
 module.exports = createInitRWCPrePreprocessor;
 
-},{}]},{},[7]);
+},{}]},{},[8]);
