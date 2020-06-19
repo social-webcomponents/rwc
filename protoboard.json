@@ -7,7 +7,7 @@
       "allex:app:lib",
       "allex:templateslite:lib",
       "allex:htmltemplates:lib",
-      "allex:hammerjs:lib"
+      "social:rwc:weblib"
     ]
   },
   "additionaltargets": {

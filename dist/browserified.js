@@ -1,12 +1,12 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-function createCandidatePresentationElement (lib, applib, templateslib, htmltemplateslib, hammerlib) {
+function createCandidatePresentationElement (lib, applib, templateslib, htmltemplateslib, rwcweblib) {
   'use strict';
 
   var FromDataCreator = applib.getElementType('FromDataCreator'),
     DataAwareElement = applib.getElementType('DataAwareElement'),
     o = templateslib.override,
     m = htmltemplateslib,
-    HammerableMixin = hammerlib.mixins.HammerableMixin;
+    SwipablePresentationMixin = rwcweblib.mixins.SwipablePresentation;
 
 
   function createDataMarkup (options){
@@ -38,14 +38,27 @@ function createCandidatePresentationElement (lib, applib, templateslib, htmltemp
       throw new Error ('options for '+this.constructor.name+' have to have "rejectEventName" property');
     }
     options.data_markup = options.data_markup || createDataMarkup(options.data_markup_options);
+    options.elements = options.elements || [];
+    if (options.clickables) {
+      options.elements.push(options.clickables.reject);
+      options.elements.push(options.clickables.accept);
+    }
     DataAwareElement.call(this, id, options);
-    HammerableMixin.call(this, options);
+    //SwipablePresentationMixin.call(this, options);
   }
   lib.inherit(CandidatePresentationElement, DataAwareElement);
-  HammerableMixin.addMethods(CandidatePresentationElement, DataAwareElement);
+  //SwipablePresentationMixin.addMethods(CandidatePresentationElement, DataAwareElement);
   CandidatePresentationElement.prototype.__cleanUp = function () {
-    HammerableMixin.prototype.destroy.call(this);
+    //SwipablePresentationMixin.prototype.destroy.call(this);
     DataAwareElement.prototype.__cleanUp.call(this);
+  };
+  CandidatePresentationElement.prototype.initiateCandidatePresentationElement = function () {
+    var clickables = this.getConfigVal('clickables');
+    if (!clickables) {
+      return;
+    }
+    this.getElement(clickables.reject.name).clicked.attach(this.fireReject.bind(this));
+    this.getElement(clickables.accept.name).clicked.attach(this.fireAccept.bind(this));
   };
   CandidatePresentationElement.prototype.makeCandidatePicture = function (pic, size, imgcode) {
     var ret;
@@ -61,48 +74,18 @@ function createCandidatePresentationElement (lib, applib, templateslib, htmltemp
     }
     return ret+pic+(size ? '-'+size : '');
   };
-  CandidatePresentationElement.prototype.resetHammerPosition = function () {
-    if (this.hammerPos) {
-      this.$element.css({opacity: 1});
-      //this.$element.css({transform: 'rotate(0deg)'});
-      this.$element.offset(this.hammerPos);
-    } else {
-      console.warn('no hammerPos?');
-    }
-  };
-  CandidatePresentationElement.prototype.onHammerPan = function (hevnt) {
-    HammerableMixin.prototype.onHammerPan.call(this, hevnt);
-    this.$element.css({opacity: 1-(hevnt.distance/200)});
-    //this.$element.css({transform: 'rotate('+(Math.sign(hevnt.deltaX)*hevnt.distance/15)+'deg)'});
-  };
-  CandidatePresentationElement.prototype.onHammerSwipe = function (hevnt) {
-    var curpos;
-    if (!this.lastKnownHammerPos) {
-      return;
-    }
-    if (this.isDistanceWeak(hevnt)) {
-      return;
-    }
-    curpos = this.$element.offset();
-    if (this.lastKnownHammerPos.left>curpos.left) {
-      this.onHammerSwipeLeft();
-      return;
-    }
-    this.onHammerSwipeRight();
-  };
-  CandidatePresentationElement.prototype.onHammerSwipeLeft = function () {
+  CandidatePresentationElement.prototype.fireReject = function () {
     console.log('reject!');
     //this.__parent.__parent.needToReject.fire(this.data.username);
-    this.__parent.__parent[this.getConfigVal('rejectEventName')].fire(this.data.username);
-    this.destroy();
+    this.__parent.__parent[this.getConfigVal('rejectEventName')].fire(this);
   };
-  CandidatePresentationElement.prototype.onHammerSwipeRight = function () {
+  CandidatePresentationElement.prototype.fireAccept = function () {
     console.log('candi-date!');
     //this.__parent.__parent.needToInitiate.fire(this.data.username);
-    this.__parent.__parent[this.getConfigVal('acceptEventName')].fire(this.data.username);
-    this.destroy();
+    this.__parent.__parent[this.getConfigVal('acceptEventName')].fire(this);
   };
 
+  CandidatePresentationElement.prototype.postInitializationMethodNames = DataAwareElement.prototype.postInitializationMethodNames.concat('initiateCandidatePresentationElement');
   applib.registerElementType('CandidatePresentationElement', CandidatePresentationElement);
 
 }
@@ -349,11 +332,11 @@ module.exports = createRWCDeckBaseCreatorElement;
     applib = lR.get('allex_applib'),
     templateslib = lR.get('allex_templateslitelib'),
     htmltemplateslib = lR.get('allex_htmltemplateslib'),
-    hammerlib = lR.get('allex_hammerjslib');
+    rwcweblib = lR.get('social_rwcweblib');
    
   //var utils = require('./utils')(lib);
 
-  require('./elements')(lib, applib, templateslib, htmltemplateslib, hammerlib);
+  require('./elements')(lib, applib, templateslib, htmltemplateslib, rwcweblib);
   require('./prepreprocessors')(lib, applib);
   require('./modifiers')(lib, applib, templateslib, htmltemplateslib);
 
@@ -492,12 +475,41 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
 module.exports = createRWCWidget;
 
 },{}],11:[function(require,module,exports){
-function funcWithTargetName (func, targetname) {
-  func([targetname]);
+function funcWithUserNameInItsData (func, target) {
+  var d;
+  if (!target) {
+    return;
+  }
+  d = target.get('data');
+  if (!(d && d.username)) {
+    return;
+  }
+  func([d.username]);
+  if (target.$element) {
+    target.$element.fadeOut(200, target.destroy.bind(target));
+    return;
+  }
+  target.destroy();
 }
 
 function createRWCWidgetIntegrator (lib, applib) {
   'use strict';
+
+  function integrateRWCAction (pp, itfname, rlm, actionname, cfg) {
+    var eventname = lib.capitalize(actionname, true),
+      handler,
+      references,
+      mycfg;
+    mycfg = lib.isVal(cfg) ? cfg[actionname] : null;
+    handler = (mycfg && lib.isFunction(mycfg.handler)) ? mycfg.handler : null;
+    references = (mycfg && handler && mycfg.references) ? (mycfg.references+',') : '';
+    console.log('total references', references+'.>'+actionname+'RelationOn'+rlm);
+    return {
+      triggers: pp+'.'+itfname+'!needTo'+eventname,
+      references: references+'.>'+actionname+'RelationOn'+rlm,
+      handler: handler ? handler : funcWithUserNameInItsData
+    };
+  }
 
   var BasicModifier = applib.BasicModifier;
 
@@ -536,22 +548,6 @@ function createRWCWidgetIntegrator (lib, applib) {
         gmf([{}]);
       }
     },{
-      triggers: pp+'.'+itfname+'!needToInitiate',
-      references: '.>initiateRelationOn'+rlm,
-      handler: funcWithTargetName
-    },{
-      triggers: pp+'.'+itfname+'!needToBlock',
-      references: '.>blockRelationOn'+rlm,
-      handler: funcWithTargetName
-    },{
-      triggers: pp+'.'+itfname+'!needToAccept',
-      references: '.>acceptRelationOn'+rlm,
-      handler: funcWithTargetName
-    },{
-      triggers: pp+'.'+itfname+'!needToReject',
-      references: '.>rejectRelationOn'+rlm,
-      handler: funcWithTargetName
-    },{
       triggers: '.>getCandidatesOn'+rlm,
       references: pp+'.'+itfname,
       handler: function (itf, gcf) {
@@ -587,7 +583,31 @@ function createRWCWidgetIntegrator (lib, applib) {
           itf.set('matches_error', glf.error);
         }
       }
-    })
+    },
+    integrateRWCAction(pp, itfname, rlm, 'initiate', this.config.customhandlers),
+    integrateRWCAction(pp, itfname, rlm, 'block', this.config.customhandlers),
+    integrateRWCAction(pp, itfname, rlm, 'accept', this.config.customhandlers),
+    integrateRWCAction(pp, itfname, rlm, 'reject', this.config.customhandlers)
+    );
+    /*
+      logic.push({
+        triggers: pp+'.'+itfname+'!needToInitiate',
+        references: '.>initiateRelationOn'+rlm,
+        handler: funcWithUserNameInItsData
+      },{
+        triggers: pp+'.'+itfname+'!needToBlock',
+        references: '.>blockRelationOn'+rlm,
+        handler: funcWithUserNameInItsData
+      },{
+        triggers: pp+'.'+itfname+'!needToAccept',
+        references: '.>acceptRelationOn'+rlm,
+        handler: funcWithUserNameInItsData
+      },{
+        triggers: pp+'.'+itfname+'!needToReject',
+        references: '.>rejectRelationOn'+rlm,
+        handler: funcWithUserNameInItsData
+      });
+    */
   };
   RWCWidgetIntegratorModifier.prototype.DEFAULT_CONFIG = function () {
     return {};

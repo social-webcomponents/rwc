@@ -1,9 +1,37 @@
-function funcWithTargetName (func, targetname) {
-  func([targetname]);
+function funcWithUserNameInItsData (func, target) {
+  var d;
+  if (!target) {
+    return;
+  }
+  d = target.get('data');
+  if (!(d && d.username)) {
+    return;
+  }
+  func([d.username]);
+  if (target.$element) {
+    target.$element.fadeOut(200, target.destroy.bind(target));
+    return;
+  }
+  target.destroy();
 }
 
 function createRWCWidgetIntegrator (lib, applib) {
   'use strict';
+
+  function integrateRWCAction (pp, itfname, rlm, actionname, cfg) {
+    var eventname = lib.capitalize(actionname, true),
+      handler,
+      references,
+      mycfg;
+    mycfg = lib.isVal(cfg) ? cfg[actionname] : null;
+    handler = (mycfg && lib.isFunction(mycfg.handler)) ? mycfg.handler : null;
+    references = (mycfg && handler && mycfg.references) ? (mycfg.references+',') : '';
+    return {
+      triggers: pp+'.'+itfname+'!needTo'+eventname,
+      references: references+'.>'+actionname+'RelationOn'+rlm,
+      handler: handler ? handler : funcWithUserNameInItsData
+    };
+  }
 
   var BasicModifier = applib.BasicModifier;
 
@@ -42,22 +70,6 @@ function createRWCWidgetIntegrator (lib, applib) {
         gmf([{}]);
       }
     },{
-      triggers: pp+'.'+itfname+'!needToInitiate',
-      references: '.>initiateRelationOn'+rlm,
-      handler: funcWithTargetName
-    },{
-      triggers: pp+'.'+itfname+'!needToBlock',
-      references: '.>blockRelationOn'+rlm,
-      handler: funcWithTargetName
-    },{
-      triggers: pp+'.'+itfname+'!needToAccept',
-      references: '.>acceptRelationOn'+rlm,
-      handler: funcWithTargetName
-    },{
-      triggers: pp+'.'+itfname+'!needToReject',
-      references: '.>rejectRelationOn'+rlm,
-      handler: funcWithTargetName
-    },{
       triggers: '.>getCandidatesOn'+rlm,
       references: pp+'.'+itfname,
       handler: function (itf, gcf) {
@@ -93,7 +105,31 @@ function createRWCWidgetIntegrator (lib, applib) {
           itf.set('matches_error', glf.error);
         }
       }
-    })
+    },
+    integrateRWCAction(pp, itfname, rlm, 'initiate', this.config.customhandlers),
+    integrateRWCAction(pp, itfname, rlm, 'block', this.config.customhandlers),
+    integrateRWCAction(pp, itfname, rlm, 'accept', this.config.customhandlers),
+    integrateRWCAction(pp, itfname, rlm, 'reject', this.config.customhandlers)
+    );
+    /*
+      logic.push({
+        triggers: pp+'.'+itfname+'!needToInitiate',
+        references: '.>initiateRelationOn'+rlm,
+        handler: funcWithUserNameInItsData
+      },{
+        triggers: pp+'.'+itfname+'!needToBlock',
+        references: '.>blockRelationOn'+rlm,
+        handler: funcWithUserNameInItsData
+      },{
+        triggers: pp+'.'+itfname+'!needToAccept',
+        references: '.>acceptRelationOn'+rlm,
+        handler: funcWithUserNameInItsData
+      },{
+        triggers: pp+'.'+itfname+'!needToReject',
+        references: '.>rejectRelationOn'+rlm,
+        handler: funcWithUserNameInItsData
+      });
+    */
   };
   RWCWidgetIntegratorModifier.prototype.DEFAULT_CONFIG = function () {
     return {};
