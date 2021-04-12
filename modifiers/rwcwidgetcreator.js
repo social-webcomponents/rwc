@@ -26,7 +26,7 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
     options.elements.push({
       name: itfname,
       type: 'RWCInterface',
-      options: lib.extend({}, {
+      options: lib.extendWithConcat({}, {
         actual: true,
         self_selector: '.',
         default_markup: o(m.div),

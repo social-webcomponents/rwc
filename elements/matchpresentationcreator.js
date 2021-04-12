@@ -35,7 +35,9 @@ function createMatchPresentationElement (lib, applib, templateslib, htmltemplate
     if (!lib.isString(options.dropEventName)) {
       throw new Error ('options for '+this.constructor.name+' have to have "dropEventName" property');
     }
-    options.data_markup = options.data_markup || createDataMarkup(options.data_markup_options);
+    if (!('data_markup' in options)) {
+      options.data_markup = createDataMarkup(options.data_markup_options);
+    }
     DataAwareElement.call(this, id, options);
   }
   lib.inherit(MatchPresentationElement, DataAwareElement);

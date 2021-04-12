@@ -6,6 +6,7 @@ function createCandidatePresentationElement (lib, applib, templateslib, htmltemp
     DataAwareElement = applib.getElementType('DataAwareElement'),
     o = templateslib.override,
     m = htmltemplateslib,
+    CandidatePresentationMixin = rwcweblib.mixins.CandidatePresentation,
     SwipablePresentationMixin = rwcweblib.mixins.SwipablePresentation;
 
 
@@ -31,34 +32,20 @@ function createCandidatePresentationElement (lib, applib, templateslib, htmltemp
 
 
   function CandidatePresentationElement (id, options) {
-    if (!lib.isString(options.acceptEventName)) {
-      throw new Error ('options for '+this.constructor.name+' have to have "acceptEventName" property');
+    if (!('data_markup' in options)) {
+      options.data_markup = createDataMarkup(options.data_markup_options);
     }
-    if (!lib.isString(options.rejectEventName)) {
-      throw new Error ('options for '+this.constructor.name+' have to have "rejectEventName" property');
-    }
-    options.data_markup = options.data_markup || createDataMarkup(options.data_markup_options);
-    options.elements = options.elements || [];
-    if (options.clickables) {
-      options.elements.push(options.clickables.reject);
-      options.elements.push(options.clickables.accept);
-    }
+    CandidatePresentationMixin.call(this, options);
     DataAwareElement.call(this, id, options);
     //SwipablePresentationMixin.call(this, options);
   }
   lib.inherit(CandidatePresentationElement, DataAwareElement);
+  CandidatePresentationMixin.addMethods(CandidatePresentationElement);
   //SwipablePresentationMixin.addMethods(CandidatePresentationElement, DataAwareElement);
   CandidatePresentationElement.prototype.__cleanUp = function () {
     //SwipablePresentationMixin.prototype.destroy.call(this);
     DataAwareElement.prototype.__cleanUp.call(this);
-  };
-  CandidatePresentationElement.prototype.initiateCandidatePresentationElement = function () {
-    var clickables = this.getConfigVal('clickables');
-    if (!clickables) {
-      return;
-    }
-    this.getElement(clickables.reject.name).clicked.attach(this.fireReject.bind(this));
-    this.getElement(clickables.accept.name).clicked.attach(this.fireAccept.bind(this));
+    CandidatePresentationMixin.prototype.destroy.call(this);
   };
   CandidatePresentationElement.prototype.makeCandidatePicture = function (pic, size, imgcode) {
     var ret;
@@ -74,18 +61,7 @@ function createCandidatePresentationElement (lib, applib, templateslib, htmltemp
     }
     return ret+pic+(size ? '-'+size : '');
   };
-  CandidatePresentationElement.prototype.fireReject = function () {
-    console.log('reject!');
-    //this.__parent.__parent.needToReject.fire(this.data.username);
-    this.__parent.__parent[this.getConfigVal('rejectEventName')].fire(this);
-  };
-  CandidatePresentationElement.prototype.fireAccept = function () {
-    console.log('candi-date!');
-    //this.__parent.__parent.needToInitiate.fire(this.data.username);
-    this.__parent.__parent[this.getConfigVal('acceptEventName')].fire(this);
-  };
 
-  CandidatePresentationElement.prototype.postInitializationMethodNames = DataAwareElement.prototype.postInitializationMethodNames.concat('initiateCandidatePresentationElement');
   applib.registerElementType('CandidatePresentationElement', CandidatePresentationElement);
 
 }
@@ -265,7 +241,9 @@ function createMatchPresentationElement (lib, applib, templateslib, htmltemplate
     if (!lib.isString(options.dropEventName)) {
       throw new Error ('options for '+this.constructor.name+' have to have "dropEventName" property');
     }
-    options.data_markup = options.data_markup || createDataMarkup(options.data_markup_options);
+    if (!('data_markup' in options)) {
+      options.data_markup = createDataMarkup(options.data_markup_options);
+    }
     DataAwareElement.call(this, id, options);
   }
   lib.inherit(MatchPresentationElement, DataAwareElement);
@@ -381,7 +359,7 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
     options.elements.push({
       name: itfname,
       type: 'RWCInterface',
-      options: lib.extend({}, {
+      options: lib.extendWithConcat({}, {
         actual: true,
         self_selector: '.',
         default_markup: o(m.div),
@@ -475,7 +453,7 @@ function createRWCWidget (lib, applib, templateslib, htmltemplateslib) {
 module.exports = createRWCWidget;
 
 },{}],11:[function(require,module,exports){
-function funcWithUserNameInItsData (func, target) {
+function funcWithUserNameInItsData (func, target, evnt) {
   var d;
   if (!target) {
     return;
@@ -484,7 +462,7 @@ function funcWithUserNameInItsData (func, target) {
   if (!(d && d.username)) {
     return;
   }
-  func([d.username]);
+  ALLEX.lib.qlib.promise2console(func([d.username]), 'rwc action');
   if (target.$element) {
     target.$element.fadeOut(200, target.destroy.bind(target));
     return;
@@ -503,7 +481,6 @@ function createRWCWidgetIntegrator (lib, applib) {
     mycfg = lib.isVal(cfg) ? cfg[actionname] : null;
     handler = (mycfg && lib.isFunction(mycfg.handler)) ? mycfg.handler : null;
     references = (mycfg && handler && mycfg.references) ? (mycfg.references+',') : '';
-    console.log('total references', references+'.>'+actionname+'RelationOn'+rlm);
     return {
       triggers: pp+'.'+itfname+'!needTo'+eventname,
       references: references+'.>'+actionname+'RelationOn'+rlm,
@@ -512,6 +489,17 @@ function createRWCWidgetIntegrator (lib, applib) {
   }
 
   var BasicModifier = applib.BasicModifier;
+
+  function reverseArray (arry) {
+    var ret = [], i;
+    if (!lib.isArray(arry)) {
+      return arry;
+    }
+    for (i=arry.length-1; i>=0; i--) {
+      ret.push(arry[i]);
+    }
+    return ret;
+  }
 
   function RWCWidgetIntegratorModifier (options) {
     if (! ('rwcrealm' in options)) {
@@ -539,13 +527,13 @@ function createRWCWidgetIntegrator (lib, applib) {
       triggers: pp+'.'+itfname+'!needLikes',
       references: '.>getInitiatorsOn'+rlm,
       handler: function (gif) {
-        gif([{}]);
+        gif([]);
       }
     },{
       triggers: pp+'.'+itfname+'!needMatches',
       references: '.>getMatchesOn'+rlm,
       handler: function (gmf) {
-        gmf([{}]);
+        gmf([]);
       }
     },{
       triggers: '.>getCandidatesOn'+rlm,
@@ -554,7 +542,8 @@ function createRWCWidgetIntegrator (lib, applib) {
         if (gcf.running) {
           return;
         }
-        itf.set('candidates', gcf.result);
+        console.log('candidatesOn'+rlm, gcf.result);
+        itf.set('candidates', reverseArray(gcf.result));
         if (gcf.error) {
           itf.set('candidates_error', gcf.error);
         }
@@ -566,7 +555,8 @@ function createRWCWidgetIntegrator (lib, applib) {
         if (glf.running) {
           return;
         }
-        itf.set('likes', glf.result);
+        console.log('likesOn'+rlm, glf.result);
+        itf.set('likes', reverseArray(glf.result));
         if (glf.error) {
           itf.set('likes_error', glf.error);
         }
@@ -578,7 +568,7 @@ function createRWCWidgetIntegrator (lib, applib) {
         if (glf.running) {
           return;
         }
-        itf.set('matches', glf.result);
+        itf.set('matches', reverseArray(glf.result));
         if (glf.error) {
           itf.set('matches_error', glf.error);
         }

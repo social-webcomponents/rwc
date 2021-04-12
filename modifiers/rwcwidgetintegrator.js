@@ -1,4 +1,4 @@
-function funcWithUserNameInItsData (func, target) {
+function funcWithUserNameInItsData (func, target, evnt) {
   var d;
   if (!target) {
     return;
@@ -7,7 +7,7 @@ function funcWithUserNameInItsData (func, target) {
   if (!(d && d.username)) {
     return;
   }
-  func([d.username]);
+  ALLEX.lib.qlib.promise2console(func([d.username]), 'rwc action');
   if (target.$element) {
     target.$element.fadeOut(200, target.destroy.bind(target));
     return;
@@ -35,6 +35,17 @@ function createRWCWidgetIntegrator (lib, applib) {
 
   var BasicModifier = applib.BasicModifier;
 
+  function reverseArray (arry) {
+    var ret = [], i;
+    if (!lib.isArray(arry)) {
+      return arry;
+    }
+    for (i=arry.length-1; i>=0; i--) {
+      ret.push(arry[i]);
+    }
+    return ret;
+  }
+
   function RWCWidgetIntegratorModifier (options) {
     if (! ('rwcrealm' in options)) {
       throw new Error('options for '+this.constructor.name+' must have a "rwcrealm" property');
@@ -61,13 +72,13 @@ function createRWCWidgetIntegrator (lib, applib) {
       triggers: pp+'.'+itfname+'!needLikes',
       references: '.>getInitiatorsOn'+rlm,
       handler: function (gif) {
-        gif([{}]);
+        gif([]);
       }
     },{
       triggers: pp+'.'+itfname+'!needMatches',
       references: '.>getMatchesOn'+rlm,
       handler: function (gmf) {
-        gmf([{}]);
+        gmf([]);
       }
     },{
       triggers: '.>getCandidatesOn'+rlm,
@@ -76,7 +87,8 @@ function createRWCWidgetIntegrator (lib, applib) {
         if (gcf.running) {
           return;
         }
-        itf.set('candidates', gcf.result);
+        console.log('candidatesOn'+rlm, gcf.result);
+        itf.set('candidates', reverseArray(gcf.result));
         if (gcf.error) {
           itf.set('candidates_error', gcf.error);
         }
@@ -88,7 +100,8 @@ function createRWCWidgetIntegrator (lib, applib) {
         if (glf.running) {
           return;
         }
-        itf.set('likes', glf.result);
+        console.log('likesOn'+rlm, glf.result);
+        itf.set('likes', reverseArray(glf.result));
         if (glf.error) {
           itf.set('likes_error', glf.error);
         }
@@ -100,7 +113,7 @@ function createRWCWidgetIntegrator (lib, applib) {
         if (glf.running) {
           return;
         }
-        itf.set('matches', glf.result);
+        itf.set('matches', reverseArray(glf.result));
         if (glf.error) {
           itf.set('matches_error', glf.error);
         }

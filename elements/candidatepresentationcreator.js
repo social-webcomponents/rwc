@@ -5,6 +5,7 @@ function createCandidatePresentationElement (lib, applib, templateslib, htmltemp
     DataAwareElement = applib.getElementType('DataAwareElement'),
     o = templateslib.override,
     m = htmltemplateslib,
+    CandidatePresentationMixin = rwcweblib.mixins.CandidatePresentation,
     SwipablePresentationMixin = rwcweblib.mixins.SwipablePresentation;
 
 
@@ -30,34 +31,20 @@ function createCandidatePresentationElement (lib, applib, templateslib, htmltemp
 
 
   function CandidatePresentationElement (id, options) {
-    if (!lib.isString(options.acceptEventName)) {
-      throw new Error ('options for '+this.constructor.name+' have to have "acceptEventName" property');
+    if (!('data_markup' in options)) {
+      options.data_markup = createDataMarkup(options.data_markup_options);
     }
-    if (!lib.isString(options.rejectEventName)) {
-      throw new Error ('options for '+this.constructor.name+' have to have "rejectEventName" property');
-    }
-    options.data_markup = options.data_markup || createDataMarkup(options.data_markup_options);
-    options.elements = options.elements || [];
-    if (options.clickables) {
-      options.elements.push(options.clickables.reject);
-      options.elements.push(options.clickables.accept);
-    }
+    CandidatePresentationMixin.call(this, options);
     DataAwareElement.call(this, id, options);
     //SwipablePresentationMixin.call(this, options);
   }
   lib.inherit(CandidatePresentationElement, DataAwareElement);
+  CandidatePresentationMixin.addMethods(CandidatePresentationElement);
   //SwipablePresentationMixin.addMethods(CandidatePresentationElement, DataAwareElement);
   CandidatePresentationElement.prototype.__cleanUp = function () {
     //SwipablePresentationMixin.prototype.destroy.call(this);
     DataAwareElement.prototype.__cleanUp.call(this);
-  };
-  CandidatePresentationElement.prototype.initiateCandidatePresentationElement = function () {
-    var clickables = this.getConfigVal('clickables');
-    if (!clickables) {
-      return;
-    }
-    this.getElement(clickables.reject.name).clicked.attach(this.fireReject.bind(this));
-    this.getElement(clickables.accept.name).clicked.attach(this.fireAccept.bind(this));
+    CandidatePresentationMixin.prototype.destroy.call(this);
   };
   CandidatePresentationElement.prototype.makeCandidatePicture = function (pic, size, imgcode) {
     var ret;
@@ -73,18 +60,7 @@ function createCandidatePresentationElement (lib, applib, templateslib, htmltemp
     }
     return ret+pic+(size ? '-'+size : '');
   };
-  CandidatePresentationElement.prototype.fireReject = function () {
-    console.log('reject!');
-    //this.__parent.__parent.needToReject.fire(this.data.username);
-    this.__parent.__parent[this.getConfigVal('rejectEventName')].fire(this);
-  };
-  CandidatePresentationElement.prototype.fireAccept = function () {
-    console.log('candi-date!');
-    //this.__parent.__parent.needToInitiate.fire(this.data.username);
-    this.__parent.__parent[this.getConfigVal('acceptEventName')].fire(this);
-  };
 
-  CandidatePresentationElement.prototype.postInitializationMethodNames = DataAwareElement.prototype.postInitializationMethodNames.concat('initiateCandidatePresentationElement');
   applib.registerElementType('CandidatePresentationElement', CandidatePresentationElement);
 
 }
